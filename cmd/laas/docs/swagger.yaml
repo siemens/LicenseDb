@@ -353,25 +353,10 @@ definitions:
         type: string
     required:
     - external_ref
-    - marydone
-    - rf_FSFfree
-    - rf_Fedora
-    - rf_GPLv2compatible
-    - rf_GPLv3compatible
-    - rf_OSIapproved
-    - rf_active
-    - rf_copyleft
-    - rf_detector_type
-    - rf_flag
     - rf_fullname
-    - rf_notes
-    - rf_risk
     - rf_shortname
-    - rf_source
     - rf_spdx_id
     - rf_text
-    - rf_text_updatable
-    - rf_url
     type: object
   models.LicensePreviewResponse:
     properties:
