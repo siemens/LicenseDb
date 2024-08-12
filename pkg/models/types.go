@@ -31,12 +31,12 @@ type LicenseDB struct {
 	Fedora          string                                       `json:"rf_Fedora" gorm:"column:rf_Fedora"`
 	TextUpdatable   bool                                         `json:"rf_text_updatable" gorm:"column:rf_text_updatable"`
 	DetectorType    int64                                        `json:"rf_detector_type" gorm:"column:rf_detector_type" example:"1"`
-	Active          bool                                         `json:"rf_active" gorm:"column:rf_active"`
+	Active          bool                                         `json:"rf_active" gorm:"column:rf_active;default:true"`
 	Source          string                                       `json:"rf_source" gorm:"column:rf_source"`
 	SpdxId          string                                       `json:"rf_spdx_id" gorm:"column:rf_spdx_id" example:"MIT"`
 	Risk            int64                                        `json:"rf_risk" gorm:"column:rf_risk"`
 	Flag            int64                                        `json:"rf_flag" gorm:"default:1;column:rf_flag" example:"1"`
-	Marydone        bool                                         `json:"marydone" gorm:"column:marydone"`
+	Marydone        bool                                         `json:"marydone" gorm:"column:marydone;default:false"`
 	ExternalRef     datatypes.JSONType[LicenseDBSchemaExtension] `json:"external_ref"`
 }
 
@@ -46,22 +46,22 @@ type LicensePOSTRequestJSONSchema struct {
 	Shortname       string                                       `json:"rf_shortname" binding:"required" example:"MIT"`
 	Fullname        string                                       `json:"rf_fullname" binding:"required" example:"MIT License"`
 	Text            string                                       `json:"rf_text" binding:"required" example:"MIT License Text here"`
-	Url             string                                       `json:"rf_url" binding:"required" example:"https://opensource.org/licenses/MIT"`
-	Copyleft        bool                                         `json:"rf_copyleft" binding:"required"`
-	FSFfree         bool                                         `json:"rf_FSFfree" binding:"required"`
-	OSIapproved     bool                                         `json:"rf_OSIapproved" binding:"required"`
-	GPLv2compatible bool                                         `json:"rf_GPLv2compatible" binding:"required"`
-	GPLv3compatible bool                                         `json:"rf_GPLv3compatible" binding:"required"`
-	Notes           string                                       `json:"rf_notes" example:"This license has been superseded." binding:"required"`
-	Fedora          string                                       `json:"rf_Fedora" binding:"required"`
-	TextUpdatable   bool                                         `json:"rf_text_updatable" binding:"required"`
-	DetectorType    int64                                        `json:"rf_detector_type" example:"1" binding:"required"`
-	Active          bool                                         `json:"rf_active" binding:"required"`
-	Source          string                                       `json:"rf_source" binding:"required"`
+	Url             string                                       `json:"rf_url" example:"https://opensource.org/licenses/MIT"`
+	Copyleft        bool                                         `json:"rf_copyleft"`
+	FSFfree         bool                                         `json:"rf_FSFfree"`
+	OSIapproved     bool                                         `json:"rf_OSIapproved"`
+	GPLv2compatible bool                                         `json:"rf_GPLv2compatible"`
+	GPLv3compatible bool                                         `json:"rf_GPLv3compatible"`
+	Notes           string                                       `json:"rf_notes" example:"This license has been superseded."`
+	Fedora          string                                       `json:"rf_Fedora"`
+	TextUpdatable   bool                                         `json:"rf_text_updatable"`
+	DetectorType    int64                                        `json:"rf_detector_type" example:"1"`
+	Active          bool                                         `json:"rf_active"`
+	Source          string                                       `json:"rf_source"`
 	SpdxId          string                                       `json:"rf_spdx_id" binding:"required" example:"MIT"`
-	Risk            int64                                        `json:"rf_risk" binding:"required"`
-	Flag            int64                                        `json:"rf_flag" binding:"required" example:"1"`
-	Marydone        bool                                         `json:"marydone" binding:"required"`
+	Risk            int64                                        `json:"rf_risk"`
+	Flag            int64                                        `json:"rf_flag" example:"1"`
+	Marydone        bool                                         `json:"marydone"`
 	ExternalRef     datatypes.JSONType[LicenseDBSchemaExtension] `json:"external_ref" binding:"required"`
 }
 
