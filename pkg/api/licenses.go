@@ -989,6 +989,9 @@ func ImportLicenses(c *gin.Context) {
 			if err := addStructFieldToMap(c, &license.Risk, "rf_risk", newLicenseMap, license.Shortname.Value, &res); err != nil {
 				return err
 			}
+			if err := addStructFieldToMap(c, &license.TextUpdatable, "rf_text_updatable", newLicenseMap, license.Shortname.Value, &res); err != nil {
+				return err
+			}
 
 			if license.Copyleft.IsDefinedAndNotNull {
 				newLicenseMap["rf_copyleft"] = license.Copyleft.Value
@@ -1127,8 +1130,8 @@ func InsertOrUpdateLicenseOnImport(tx *gorm.DB, newLicenseMap map[string]interfa
 		// Update all other fields except external_ref
 		query := tx.Model(&newLicense).Where(&models.LicenseDB{Shortname: newLicenseMap["rf_shortname"].(string)}).Omit("external_ref")
 
-		// Do not update text in import if it was modified manually
-		if oldLicense.Flag == 2 {
+		// Do not update text in import if it was modified manually or TextUpdatable flag is false
+		if oldLicense.Flag == 2 || !oldLicense.TextUpdatable {
 			query = query.Omit("rf_text")
 		}
 
@@ -1140,6 +1143,10 @@ func InsertOrUpdateLicenseOnImport(tx *gorm.DB, newLicenseMap map[string]interfa
 
 		if oldLicense.Flag == 2 {
 			message = "all fields except rf_text were updated. rf_text was updated manually and cannot be overwritten in an import."
+			importStatus = models.IMPORT_LICENSE_UPDATED_EXCEPT_TEXT
+			// error is not returned here as it will rollback the transaction
+		} else if !oldLicense.TextUpdatable {
+			message = "all fields except rf_text were updated. rf_text_updatable flag is set to false."
 			importStatus = models.IMPORT_LICENSE_UPDATED_EXCEPT_TEXT
 			// error is not returned here as it will rollback the transaction
 		} else {
