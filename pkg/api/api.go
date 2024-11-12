@@ -15,6 +15,8 @@ import (
 	"strconv"
 	"time"
 
+	"github.com/gin-contrib/sessions"
+	"github.com/gin-contrib/sessions/memstore"
 	"github.com/gin-gonic/gin"
 	swaggerFiles "github.com/swaggo/files"
 	ginSwagger "github.com/swaggo/gin-swagger"
@@ -73,6 +75,9 @@ func Router() *gin.Engine {
 	// r is a default instance of gin engine
 	r := gin.Default()
 
+	store := memstore.NewStore([]byte("secret"))
+	r.Use(sessions.Sessions("oidcSession", store))
+
 	// return error for invalid routes
 	r.NoRoute(HandleInvalidUrl)
 
@@ -92,6 +97,11 @@ func Router() *gin.Engine {
 			login := unAuthorizedv1.Group("/login")
 			{
 				login.POST("", auth.Login)
+			}
+			oidc := unAuthorizedv1.Group("/oidc")
+			{
+				oidc.GET("/login", auth.OidcLogin)
+				oidc.GET("/callback", auth.OidcCallback)
 			}
 			apiCollection := unAuthorizedv1.Group("/apiCollection")
 			{
@@ -190,6 +200,11 @@ func Router() *gin.Engine {
 			login := unAuthorizedv1.Group("/login")
 			{
 				login.POST("", auth.Login)
+			}
+			oidc := unAuthorizedv1.Group("/oidc")
+			{
+				oidc.GET("/login", auth.OidcLogin)
+				oidc.GET("/callback", auth.OidcCallback)
 			}
 			apiCollection := unAuthorizedv1.Group("/apiCollection")
 			{

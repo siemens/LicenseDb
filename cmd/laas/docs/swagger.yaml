@@ -1571,6 +1571,49 @@ paths:
       summary: Get topic and types of all active obligations
       tags:
       - Obligations
+  /oidc/callback:
+    get:
+      consumes:
+      - application/json
+      description: Handle the OAuth callback and retrieve token
+      operationId: OidcCallback
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: JWT token
+          schema:
+            properties:
+              token:
+                type: string
+            type: object
+        "500":
+          description: Failed to login
+          schema:
+            $ref: '#/definitions/models.LicenseError'
+      summary: Handle the OAuth callback and retrieve token
+      tags:
+      - Users
+  /oidc/login:
+    get:
+      consumes:
+      - application/json
+      description: Handles the OIDC Login
+      operationId: OidcLogin
+      produces:
+      - application/json
+      responses:
+        "307":
+          description: Temporary redirect to the oidc provider login page
+          schema:
+            type: string
+        "500":
+          description: Failed to login
+          schema:
+            $ref: '#/definitions/models.LicenseError'
+      summary: Handles the OIDC Login
+      tags:
+      - Users
   /search:
     post:
       consumes:

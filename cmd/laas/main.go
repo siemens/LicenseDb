@@ -9,13 +9,17 @@ package main
 import (
 	"flag"
 	"log"
+	"os"
 
+	"github.com/MicahParks/keyfunc/v3"
 	"github.com/joho/godotenv"
+	"golang.org/x/oauth2"
 	"gorm.io/gorm/clause"
 
 	_ "github.com/dave/jennifer/jen"
 	_ "github.com/fossology/LicenseDb/cmd/laas/docs"
 	"github.com/fossology/LicenseDb/pkg/api"
+	"github.com/fossology/LicenseDb/pkg/auth"
 	"github.com/fossology/LicenseDb/pkg/db"
 	"github.com/fossology/LicenseDb/pkg/models"
 	"github.com/fossology/LicenseDb/pkg/utils"
@@ -44,6 +48,28 @@ func main() {
 
 	if err != nil {
 		log.Fatalf("Error loading .env file")
+	}
+
+	if os.Getenv("CLIENT_ID") == "" || os.Getenv("CLIENT_SECRET") == "" || os.Getenv("REDIRECT_URL") == "" ||
+		os.Getenv("AUTH_URL") == "" || os.Getenv("TOKEN_URL") == "" || os.Getenv("JWKS_URI") == "" {
+		log.Fatalf("Missing OIDC configuration values in .env file")
+	}
+
+	// OIDC configuration
+	auth.OidcConfig = &oauth2.Config{
+		ClientID:     os.Getenv("CLIENT_ID"),
+		ClientSecret: os.Getenv("CLIENT_SECRET"),
+		RedirectURL:  os.Getenv("REDIRECT_URL"),
+		Scopes:       []string{"openid", "profile", "email"},
+		Endpoint: oauth2.Endpoint{
+			AuthURL:  os.Getenv("AUTH_URL"),
+			TokenURL: os.Getenv("TOKEN_URL"),
+		},
+	}
+
+	auth.Jwks, err = keyfunc.NewDefault([]string{os.Getenv("JWKS_URI")}) // Context is used to end the refresh goroutine.
+	if err != nil {
+		log.Fatalf("Failed to create a keyfunc.Keyfunc from the oidc provider's URL: %s", err)
 	}
 
 	flag.Parse()

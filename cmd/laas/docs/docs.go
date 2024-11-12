@@ -1480,6 +1480,71 @@ const docTemplate = `{
                 }
             }
         },
+        "/oidc/callback": {
+            "get": {
+                "description": "Handle the OAuth callback and retrieve token",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Users"
+                ],
+                "summary": "Handle the OAuth callback and retrieve token",
+                "operationId": "OidcCallback",
+                "responses": {
+                    "200": {
+                        "description": "JWT token",
+                        "schema": {
+                            "type": "object",
+                            "properties": {
+                                "token": {
+                                    "type": "string"
+                                }
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Failed to login",
+                        "schema": {
+                            "$ref": "#/definitions/models.LicenseError"
+                        }
+                    }
+                }
+            }
+        },
+        "/oidc/login": {
+            "get": {
+                "description": "Handles the OIDC Login",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Users"
+                ],
+                "summary": "Handles the OIDC Login",
+                "operationId": "OidcLogin",
+                "responses": {
+                    "307": {
+                        "description": "Temporary redirect to the oidc provider login page",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "500": {
+                        "description": "Failed to login",
+                        "schema": {
+                            "$ref": "#/definitions/models.LicenseError"
+                        }
+                    }
+                }
+            }
+        },
         "/search": {
             "post": {
                 "security": [

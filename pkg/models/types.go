@@ -215,6 +215,9 @@ type User struct {
 	Username     string  `json:"username" gorm:"unique;not null" binding:"required" example:"fossy"`
 	Userlevel    string  `json:"userlevel" binding:"required" example:"admin"`
 	Userpassword *string `json:"-"`
+	Active       *bool   `json:"-" gorm:"not null;default:true"`
+	OidcSub      *string `json:"-"`
+	OidcIss      *string `json:"-"`
 }
 
 type UserInput struct {
