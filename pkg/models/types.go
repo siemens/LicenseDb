@@ -741,3 +741,21 @@ type SwaggerDocAPISecurityScheme struct {
 		OperationId string                   `json:"operationId" example:"GetLicense"`
 	} `json:"paths"`
 }
+
+type RiskLicenseCount struct {
+	Risk  int64 `json:"risk"`
+	Count int64 `json:"count"`
+}
+
+type Dashboard struct {
+	LicensesCount                int64              `json:"licenses_count"`
+	ObligationsCount             int64              `json:"obligations_count"`
+	UsersCount                   int64              `json:"users_count"`
+	LicenseChangesSinceLastMonth int64              `json:"monthly_license_changes_count"`
+	RiskLicenseFrequency         []RiskLicenseCount `json:"risk_license_frequency"`
+}
+
+type DashboardResponse struct {
+	Status int       `json:"status" example:"200"`
+	Data   Dashboard `json:"data"`
+}

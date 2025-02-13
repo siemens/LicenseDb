@@ -860,6 +860,29 @@ paths:
       summary: Get a changelog
       tags:
       - Audits
+  /dashboard:
+    get:
+      consumes:
+      - application/json
+      description: Fetches data to be displayed on the dashboard
+      operationId: GetDashboardData
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/models.LicenseResponse'
+        "500":
+          description: Something went wrong
+          schema:
+            $ref: '#/definitions/models.LicenseError'
+      security:
+      - '{}': []
+        ApiKeyAuth: []
+      summary: Fetches data to be displayed on the dashboard
+      tags:
+      - Dashboard
   /health:
     get:
       consumes:
