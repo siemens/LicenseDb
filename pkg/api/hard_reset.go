@@ -5,45 +5,19 @@
 package api
 
 import (
-	"fmt"
 	"net/http"
-	"strings"
 	"time"
 
 	"github.com/fossology/LicenseDb/pkg/db"
 	"github.com/fossology/LicenseDb/pkg/models"
-	"github.com/fossology/LicenseDb/pkg/utils"
 	"github.com/gin-gonic/gin"
-	"github.com/google/uuid"
+	"gorm.io/gorm"
 )
 
-var hardResetDefaultObligationTypes = []string{
-	"OBLIGATION",
-	"RISK",
-	"RESTRICTION",
-	"RIGHT",
-}
-
-var hardResetDefaultObligationClassifications = []models.ObligationClassification{
-	{Classification: "GREEN", Color: "#00FF00"},
-	{Classification: "WHITE", Color: "#FFFFFF"},
-	{Classification: "YELLOW", Color: "#FFDE21"},
-	{Classification: "RED", Color: "#FF0000"},
-}
-
-var hardResetDefaultObligationCategories = []string{
-	"DISTRIBUTION",
-	"PATENT",
-	"INTERNAL",
-	"CONTRACTUAL",
-	"EXPORT_CONTROL",
-	"GENERAL",
-}
-
-// HardResetDatabase removes all records only from configured tables.
+// HardResetDatabase marks licenses and obligations inactive.
 //
 //	@Summary		Hard reset database
-//	@Description	Delete all data from configured tables used by license/obligation/audit domain
+//	@Description	Mark all licenses and obligations inactive
 //	@Id				HardResetDatabase
 //	@Tags			Admin
 //	@Produce		json
@@ -52,21 +26,17 @@ var hardResetDefaultObligationCategories = []string{
 //	@Security		ApiKeyAuth
 //	@Router			/hard-reset [delete]
 func HardResetDatabase(c *gin.Context) {
-	userId := c.MustGet("userId").(uuid.UUID)
-
-	var hardResetTables = []string{
-		"license_dbs",
-		"obligation_types",
-		"obligation_classifications",
-		"obligation_licenses",
-		"obligation_categories",
-		"obligations",
-		"audits",
-		"change_logs",
-	}
-
-	truncateQuery := fmt.Sprintf("TRUNCATE TABLE %s RESTART IDENTITY CASCADE", strings.Join(hardResetTables, ", "))
-	if err := db.DB.Exec(truncateQuery).Error; err != nil {
+	activeStatus := true
+	inactiveStatus := false
+	if err := db.DB.Transaction(func(tx *gorm.DB) error {
+		if err := tx.Model(&models.LicenseDB{}).Where(&models.LicenseDB{Active: &activeStatus}).Updates(&models.LicenseDB{Active: &inactiveStatus}).Error; err != nil {
+			return err
+		}
+		if err := tx.Model(&models.Obligation{}).Where(&models.Obligation{Active: &activeStatus}).Updates(&models.Obligation{Active: &inactiveStatus}).Error; err != nil {
+			return err
+		}
+		return nil
+	}); err != nil {
 		c.JSON(http.StatusInternalServerError, models.LicenseError{
 			Status:    http.StatusInternalServerError,
 			Message:   "failed to hard reset database",
@@ -75,51 +45,6 @@ func HardResetDatabase(c *gin.Context) {
 			Timestamp: time.Now().Format(time.RFC3339),
 		})
 		return
-	}
-
-	for _, obligationType := range hardResetDefaultObligationTypes {
-		status, _ := utils.CreateObType(&models.ObligationType{Type: obligationType}, userId)
-		if status != utils.CREATED && status != utils.CONFLICT {
-			c.JSON(http.StatusInternalServerError, models.LicenseError{
-				Status:    http.StatusInternalServerError,
-				Message:   fmt.Sprintf("failed to restore default obligation type '%s'", obligationType),
-				Error:     fmt.Sprintf("failed to restore default obligation type '%s'", obligationType),
-				Path:      c.Request.URL.Path,
-				Timestamp: time.Now().Format(time.RFC3339),
-			})
-			return
-		}
-	}
-
-	for _, obligationClassification := range hardResetDefaultObligationClassifications {
-		status, _ := utils.CreateObClassification(&models.ObligationClassification{
-			Classification: obligationClassification.Classification,
-			Color:          obligationClassification.Color,
-		}, userId)
-		if status != utils.CREATED && status != utils.CONFLICT {
-			c.JSON(http.StatusInternalServerError, models.LicenseError{
-				Status:    http.StatusInternalServerError,
-				Message:   fmt.Sprintf("failed to restore default obligation classification '%s'", obligationClassification.Classification),
-				Error:     fmt.Sprintf("failed to restore default obligation classification '%s'", obligationClassification.Classification),
-				Path:      c.Request.URL.Path,
-				Timestamp: time.Now().Format(time.RFC3339),
-			})
-			return
-		}
-	}
-
-	for _, obligationCategory := range hardResetDefaultObligationCategories {
-		status, _ := utils.CreateObCategory(&models.ObligationCategory{Category: obligationCategory}, userId)
-		if status != utils.CREATED && status != utils.CONFLICT {
-			c.JSON(http.StatusInternalServerError, models.LicenseError{
-				Status:    http.StatusInternalServerError,
-				Message:   fmt.Sprintf("failed to restore default obligation category '%s'", obligationCategory),
-				Error:     fmt.Sprintf("failed to restore default obligation category '%s'", obligationCategory),
-				Path:      c.Request.URL.Path,
-				Timestamp: time.Now().Format(time.RFC3339),
-			})
-			return
-		}
 	}
 
 	c.Status(http.StatusNoContent)

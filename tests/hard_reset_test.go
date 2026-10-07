@@ -21,7 +21,7 @@ func TestHardResetDatabase(t *testing.T) {
 
 	loginAs(t, "admin")
 	clientID := fmt.Sprintf("hard-reset-client-%d", time.Now().UnixNano())
-	createOIDCPayload := models.CreateDeleteOidcClientDTO{ClientId: clientID}
+	createOIDCPayload := models.CreateOidcClientDTO{ClientId: clientID}
 	createW := makeRequest("POST", "/oidcClients", createOIDCPayload, true)
 	assert.Equal(t, http.StatusCreated, createW.Code)
 
@@ -31,9 +31,20 @@ func TestHardResetDatabase(t *testing.T) {
 	var oidcClientsBeforeReset int64
 	assert.NoError(t, db.DB.Model(&models.OidcClient{}).Count(&oidcClientsBeforeReset).Error)
 
-	var licensesBeforeReset int64
-	assert.NoError(t, db.DB.Model(&models.LicenseDB{}).Count(&licensesBeforeReset).Error)
-	assert.Greater(t, licensesBeforeReset, int64(0), "expected licenses to exist before hard reset")
+	unchangedTables := []string{
+		"obligation_types",
+		"obligation_classifications",
+		"obligation_licenses",
+		"obligation_categories",
+		"audits",
+		"change_logs",
+	}
+	tableCountsBeforeReset := make(map[string]int64, len(unchangedTables))
+	for _, table := range unchangedTables {
+		var count int64
+		assert.NoError(t, db.DB.Table(table).Count(&count).Error)
+		tableCountsBeforeReset[table] = count
+	}
 
 	loginAs(t, "admin")
 	resetW := makeRequest("DELETE", "/hard-reset", nil, true)
@@ -47,21 +58,20 @@ func TestHardResetDatabase(t *testing.T) {
 	assert.NoError(t, db.DB.Model(&models.OidcClient{}).Count(&oidcClientsAfterReset).Error)
 	assert.Equal(t, oidcClientsBeforeReset, oidcClientsAfterReset)
 
-	var licensesAfterReset int64
-	assert.NoError(t, db.DB.Model(&models.LicenseDB{}).Count(&licensesAfterReset).Error)
-	assert.Equal(t, int64(0), licensesAfterReset)
+	for _, table := range unchangedTables {
+		var count int64
+		assert.NoError(t, db.DB.Table(table).Count(&count).Error)
+		assert.Equal(t, tableCountsBeforeReset[table], count, "expected %s rows to be preserved", table)
+	}
 
-	var obligationTypesAfterReset int64
-	assert.NoError(t, db.DB.Model(&models.ObligationType{}).Count(&obligationTypesAfterReset).Error)
-	assert.Equal(t, int64(4), obligationTypesAfterReset)
+	active := true
+	var activeLicenses int64
+	assert.NoError(t, db.DB.Model(&models.LicenseDB{}).Where(&models.LicenseDB{Active: &active}).Count(&activeLicenses).Error)
+	assert.Zero(t, activeLicenses)
 
-	var obligationClassificationsAfterReset int64
-	assert.NoError(t, db.DB.Model(&models.ObligationClassification{}).Count(&obligationClassificationsAfterReset).Error)
-	assert.Equal(t, int64(4), obligationClassificationsAfterReset)
-
-	var obligationCategoriesAfterReset int64
-	assert.NoError(t, db.DB.Model(&models.ObligationCategory{}).Count(&obligationCategoriesAfterReset).Error)
-	assert.Equal(t, int64(6), obligationCategoriesAfterReset)
+	var activeObligations int64
+	assert.NoError(t, db.DB.Model(&models.Obligation{}).Where(&models.Obligation{Active: &active}).Count(&activeObligations).Error)
+	assert.Zero(t, activeObligations)
 }
 
 func TestHardResetDatabaseUnauthorized(t *testing.T) {
