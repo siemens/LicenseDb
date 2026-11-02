@@ -32,7 +32,8 @@ COPY --from=build /LicenseDb/laas /app/laas
 
 EXPOSE 8080
 
-RUN chmod +rx /app/entrypoint.sh \
+RUN sed -i 's/\r$//' /app/entrypoint.sh \
+    && chmod +rx /app/entrypoint.sh \
     && touch /app/.env \
     && chown --recursive noroot:noroot /app
 

@@ -14,6 +14,6 @@ data_file="/app/licenseRef.json"
 
 printf "READ_API_AUTHENTICATION_ENABLED=false\nTOKEN_HOUR_LIFESPAN=24\nAPI_SECRET=%s\n" $(openssl rand -hex 32) > /app/.env
 
-/app/laas -host=$db_host -port=$db_port -user=$db_user -dbname=$db_name \
+exec /app/laas -host=$db_host -port=$db_port -user=$db_user -dbname=$db_name \
   -password=$db_password -datafile="$data_file" -populatedb=$populate_db
 

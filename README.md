@@ -122,6 +122,53 @@ Run the following query to create the first user.
 INSERT INTO users (username, userpassword, userlevel) VALUES ('<username>', '<password>', 'admin'); 
 ```
 
+## Docker Compose deployment
+
+Start LicenseDB and PostgreSQL using Docker Compose:
+
+```bash
+docker compose up -d --build --wait
+docker compose ps
+curl -fsS http://127.0.0.1:8080/api/v1/health
+```
+
+The `licensedb` and `postgres` services use `restart: always`. The
+LicenseDB entrypoint replaces its shell process with the LicenseDB process,
+allowing Docker to detect an unexpected API exit and restart the container.
+
+To start the Compose stack after a host restart, install the generic unit
+template at [docs/licensedb-compose.service](docs/licensedb-compose.service)
+as `/etc/systemd/system/licensedb-compose.service`, changing
+`/opt/licensedb` to the deployment directory first. Then run:
+
+```bash
+sudo systemctl daemon-reload
+sudo systemctl enable --now licensedb-compose.service
+```
+
+### Recovery verification
+
+Run this only against a non-production test deployment. It simulates an
+unexpected API process exit without using `docker stop` or `docker kill`:
+
+```bash
+api=$(docker compose ps -q licensedb)
+before=$(docker inspect --format '{{.RestartCount}}' "$api")
+host_pid=$(docker inspect --format '{{.State.Pid}}' "$api")
+
+sudo kill -KILL "$host_pid"
+
+until [ "$(docker inspect --format '{{.RestartCount}}' "$api")" -gt "$before" ] \
+  && [ "$(docker inspect --format '{{.State.Health.Status}}' "$api")" = healthy ]; do
+  sleep 2
+done
+
+curl -fsS http://127.0.0.1:8080/api/v1/health
+```
+
+The test passes when `RestartCount` increases, the service becomes healthy,
+and the health endpoint returns successfully.
+
 ### Generating Swagger Documentation
 1. Install [swag](https://github.com/swaggo/swag) using the following command.
     ```bash

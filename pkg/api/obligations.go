@@ -441,7 +441,7 @@ func DeleteObligation(c *gin.Context) {
 // @Failure		404		{object}	models.LicenseError	"No obligation with given topic found"
 // @Failure		500		{object}	models.LicenseError	"unable to find audits with such obligation topic"
 //
-//	@Security		ApiKeyAuth || {}
+// @Security		ApiKeyAuth || {}
 //
 // @Router			/obligations/{topic}/audits [get]
 func GetObligationAudits(c *gin.Context) {
